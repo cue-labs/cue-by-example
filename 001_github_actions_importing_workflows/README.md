@@ -1,4 +1,5 @@
 # Importing GitHub Actions workflow files into CUE
+<sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
 This guide explains how to convert GitHub Actions workflow files from YAML to
 CUE, check those workflows are valid, and then use CUE's tooling layer to
@@ -98,7 +99,7 @@ workflows: workflow2: {
 
 #### :arrow_right: Store CUE workflows in a dedicated directory
 
-Create a directory called `github` to will hold your CUE-based GitHub Actions
+Create a directory called `github` to hold your CUE-based GitHub Actions
 workflow files. For example:
 
 :computer: `terminal`
@@ -106,9 +107,9 @@ workflow files. For example:
 mkdir -p internal/ci/github
 ```
 
-You can change the hierarchy and naming of the parent directories to suit your
-repository layout. If you do so, you will need to adapt some commands and CUE
-code as you follow this guide.
+You may change the hierarchy and naming of `github`'s **parent** directories to
+suit your repository layout. If you do so, you will need to adapt some commands
+and CUE code as you follow this guide.
 
 Move the newly-created CUE files into their dedicated directory. For example:
 
@@ -222,7 +223,7 @@ on demand.
 #### :arrow_right: Test the CUE tool file
 
 With the modified `ci_tool.cue` file in place, check that the `regenerate`
-command is available *from a shell sitting at the repo root*. For example:
+command is available **from a shell sitting at the repo root**. For example:
 
 :computer: `terminal`
 ```sh
