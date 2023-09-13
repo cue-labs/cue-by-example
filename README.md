@@ -5,8 +5,12 @@ This repo contains examples of real-world use of CUE, integrating with
 
 ## Index
 
-- 001: [Importing GitHub Actions workflows](001_github_actions_importing_workflows/README.md)
-- 002: [Validating Terraform plans with CUE](002_terraform_plan/README/md)
+- 001:
+  [Importing GitHub Actions workflows](001_github_actions_importing_workflows/README.md)
+- 002:
+  [Validating Terraform plans with CUE](002_terraform_plan/README.md)
+- 003:
+  [First steps with the "CUE Terraform Github Config Experiment" repo](003_cue_terraform_github_config_experiment_first_steps/README.md)
 
 ## Contributing
 
