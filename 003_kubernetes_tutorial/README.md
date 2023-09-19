@@ -1,4 +1,7 @@
 # Kubernetes tutorial
+<sup>by [The CUE Project](https://cuelang.org/)</sup>
+
+## Introduction
 
 In this tutorial we show how to convert Kubernetes configuration files
 for a collection of microservices.
@@ -22,31 +25,40 @@ In this tutorial we will address the following topics:
 1. map a Kubernetes configuration to `docker-compose` (TODO)
 
 
-## The given data set
+### Context of this tutorial
 
-The data set is based on a real-life case, using different names for the
-services.
+The data set contained in this tutorial's directory is based on a real-life
+case, using different names for the services.
 All the inconsistencies of the real setup are replicated in the files
 to get a realistic impression of how a conversion to CUE would behave
 in practice.
 
-The given YAML files are ordered in following directory
-(you can use `find` if you don't have tree):
+#### :arrow_right: Familiarise yourself with the context
+
+The given YAML files are ordered across various directories. See what files are
+present like this:
+
+:computer: `terminal`
+```sh
+find ./original -type f
+```
+
+This will show you the following output, which we have truncated here:
 
 ```
-$ tree ./original | head
-.
-└── services
-    ├── frontend
-    │   ├── bartender
-    │   │   └── kube.yaml
-    │   ├── breaddispatcher
-    │   │   └── kube.yaml
-    │   ├── host
-    │   │   └── kube.yaml
-    │   ├── maitred
-...
+./original/services/frontend/bartender/kube.yaml
+./original/services/frontend/breaddispatcher/kube.yaml
+./original/services/frontend/host/kube.yaml
+./original/services/frontend/maitred/kube.yaml
+./original/services/frontend/valeter/kube.yaml
+./original/services/frontend/waiter/kube.yaml
+./original/services/frontend/waterdispatcher/kube.yaml
+./original/services/infra/download/kube.yaml
+./original/services/infra/etcd/kube.yaml
+./original/services/infra/events/kube.yaml
+[ ... truncated ... ]
 ```
+
 
 Each subdirectory contains related microservices that often share similar
 characteristics and configurations.
@@ -56,54 +68,70 @@ a daemon set, a stateful set, and a cron job.
 
 The result of the first tutorial is in the `quick`, for "quick and dirty"
 directory.
-A manually optimized configuration can be found int `manual`
+A manually optimized configuration can be found in the `manual`
 directory.
 
 
 ## Importing existing configuration
 
-We first make a copy of the data directory.
+#### :arrow_right: Make a copy of the data directory
 
-```
-$ cp -a original tmp
-$ cd tmp
+:computer: `terminal`
+```sh
+cp -a original tmp
+cd tmp
 ```
 
-We initialize a module so that we can treat all our configuration files
-in the subdirectories as part of one package.
+#### :arrow_right: Initialize a CUE module
+
+:computer: `terminal`
+```sh
+cue mod init
+```
+
+We initialize a CUE module so that we can treat all our configuration files in
+the subdirectories as part of one package.
 We do that later by giving all the same package name.
 
-```
-$ cue mod init
-```
+Creating a module also allows our packages to import external packages.
 
-Creating a module also allows our packages import external packages.
+#### :arrow_right: Initialize a Go module
+
+:computer: `terminal`
+```sh
+go mod init mod.test
+```
 
 We initialize a Go module so that later we can resolve the
 `k8s.io/api/apps/v1` Go package dependency:
 
-```
-$ go mod init mod.test
+#### :arrow_right: Attempt 1: import YAML files into a single CUE package
+
+Let's try to use the `cue import` command to convert the given YAML files into
+CUE, into the `kube` package:
+
+:computer: `terminal`
+```sh
+cd services
+cue import ./... -p kube
 ```
 
-Let's try to use the `cue import` command to convert the given YAML files
-into CUE.
+We needed to specify the package to which they should belong (`-p kube`)
+because we have multiple packages and files.
+
+This will output the following error message:
 
 ```
-$ cd services
-```
-
-Since we have multiple packages and files, we need to specify the package to
-which they should belong.
-
-```
-$ cue import ./... -p kube
 path, list, or files flag needed to handle multiple objects in file ./services/frontend/bartender/kube.yaml
 ```
 
-Many of the files contain more than one Kubernetes object.
+This error message is shown because many of the files contain more than one
+Kubernetes object.
 Moreover, we are creating a single configuration that contains all objects
 from all files.
+
+#### :arrow_right: Attempt 2: import YAML files using dynamic object addresses
+
 We need to organize all Kubernetes objects such that each is individually
 identifiable within the single configuration.
 We do so by defining a different struct for each type putting each object
@@ -113,8 +141,9 @@ just as is allowed by Kubernetes.
 To accomplish this, we tell `cue` to put each object in the configuration
 tree at the path with the "kind" as first element and "name" as second.
 
-```
-$ cue import ./... -p kube -l 'strings.ToCamel(kind)' -l metadata.name -f
+:computer: `terminal`
+```sh
+cue import ./... -p kube -l 'strings.ToCamel(kind)' -l metadata.name -f
 ```
 
 The added `-l` flag defines the labels for each object, based on values from
@@ -123,20 +152,27 @@ In this case, we use a camelcase variant of the `kind` field of each object and
 use the `name` field of the `metadata` section as the name for each object.
 We also added the `-f` flag to overwrite the few files that succeeded before.
 
-Let's see what happened:
+Let's see what happened, by running:
+
+:computer: `terminal`
+```sh
+find . -type f
+```
+
+This will show something similar to the following:
 
 ```
-$ tree . | head
-.
-└── services
-    ├── frontend
-    │   ├── bartender
-    │   │   ├── kube.cue
-    │   │   └── kube.yaml
-    │   ├── breaddispatcher
-    │   │   ├── kube.cue
-    │   │   └── kube.yaml
-...
+./frontend/bartender/kube.yaml
+./frontend/bartender/kube.cue
+./frontend/breaddispatcher/kube.yaml
+./frontend/breaddispatcher/kube.cue
+./frontend/host/kube.yaml
+./frontend/host/kube.cue
+./frontend/maitred/kube.yaml
+./frontend/maitred/kube.cue
+./frontend/valeter/kube.yaml
+./frontend/valeter/kube.cue
+[ ... truncated ... ]
 ```
 
 Each of the YAML files is converted to corresponding CUE files.
@@ -145,18 +181,19 @@ Comments of the YAML files are preserved.
 The result is not fully pleasing, though.
 Take a look at `mon/prometheus/configmap.cue`.
 
-```
-$ cat mon/prometheus/configmap.cue
+:floppy_disk: `mon/prometheus/configmap.cue`
+```cue
 package kube
 
-apiVersion: "v1"
-kind:       "ConfigMap"
-metadata: name: "prometheus"
-data: {
-    "alert.rules": """
-        groups:
-        - name: rules.yaml
-...
+configMap: prometheus: {
+	apiVersion: "v1"
+	kind:       "ConfigMap"
+	metadata: name: "prometheus"
+	data: {
+		"alert.rules": """
+			groups:
+			- name: rules.yaml
+[ ... truncated ... ]
 ```
 
 The configuration file still contains YAML embedded in a string value of one
@@ -164,43 +201,57 @@ of the fields.
 The original YAML file might have looked like it was all structured data, but
 the majority of it was a string containing, hopefully, valid YAML.
 
-The `-R` option attempts to detect structured YAML or JSON strings embedded
-in the configuration files and then converts these recursively.
+#### :arrow_right: Attempt 3: import YAML files using embedded string processing
+
+Use `cue import`'s `-R` option to attempt to detect structured YAML or JSON
+strings embedded in the configuration files and convert them recursively:
 
 <!-- TODO: update import label format -->
 
-```
-$ cue import ./... -p kube -l 'strings.ToCamel(kind)' -l metadata.name -f -R
+:computer: `terminal`
+```sh
+cue import ./... -p kube -l 'strings.ToCamel(kind)' -l metadata.name -f -R
 ```
 
-Now the file looks like:
+Re-examine the imported CUE file:
 
-```
-$ cat mon/prometheus/configmap.cue
+:floppy_disk: `mon/prometheus/configmap.cue`
+```cue
 package kube
 
-import "encoding/yaml"
+import yaml656e63 "encoding/yaml"
 
 configMap: prometheus: {
-    apiVersion: "v1"
-    kind:       "ConfigMap"
-    metadata: name: "prometheus"
-    data: {
-        "alert.rules": yaml.Marshal(_cue_alert_rules)
-        _cue_alert_rules: {
-            groups: [{
-...
+	apiVersion: "v1"
+	kind:       "ConfigMap"
+	metadata: name: "prometheus"
+	data: {
+		"alert.rules": yaml656e63.Marshal(_cue_alert_rules)
+[ ... truncated ... ]
 ```
 
 That looks better!
 The resulting configuration file replaces the original embedded string
 with a call to `yaml.Marshal` converting a structured CUE source to
 a string with an equivalent YAML file.
-Fields starting with an underscore (`_`) are not included when emitting
-a configuration file (they are when enclosed in double quotes).
 
+#### :arrow_right: Verify CUE output
+
+Fields starting with an underscore (`_`) are not included when emitting
+a configuration file (except when the field's name is enclosed in double quotes).
+
+Verify that the `_cue_alert_rules` field added above, when using `cue import`'s
+`-R` option, isn't present in `cue`'s *output* by running:
+
+
+:computer: `terminal`
+```sh
+cue eval ./mon/prometheus -e configMap.prometheus
 ```
-$ cue eval ./mon/prometheus -e configMap.prometheus
+
+This will show the following:
+
+```cue
 apiVersion: "v1"
 kind:       "ConfigMap"
 metadata: {
@@ -210,7 +261,8 @@ data: {
     "alert.rules": """
         groups:
           - name: rules.yaml
-...
+            rules:
+[ ... truncated ... ]
 ```
 
 Yay!
@@ -227,17 +279,23 @@ a more thoughtful manual optimization.
 
 ### Create top-level template
 
-Now we have imported the YAML files we can start the simplification process.
+After importing the YAML files above, we can start the simplification process.
 
-Before we start the restructuring, lets save a full evaluation so that we
-can verify that simplifications yield the same results.
+#### :arrow_right: Save a reference copy
 
-```
-$ cue eval -c ./... >snapshot
+Before we start the restructuring, lets save a full evaluation (so that we
+can verify that simplifications yield the same results) by running:
+
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot
 ```
 
 The `-c` option tells `cue` that only concrete values, that is valid JSON,
 are allowed.
+
+#### :arrow_right: Start creating a template
+
 We focus on the objects defined in the various `kube.cue` files.
 A quick inspection reveals that many of the Deployments and Services share
 common structure.
@@ -245,14 +303,15 @@ common structure.
 We copy one of the files containing both as a basis for creating our template
 to the root of the directory tree.
 
-```
-$ cp frontend/breaddispatcher/kube.cue .
+:computer: `terminal`
+```sh
+cp frontend/breaddispatcher/kube.cue .
 ```
 
 Modify this file as below.
 
-```
-$ cat <<EOF > kube.cue
+:floppy_disk: `./kube.cue`
+```cue
 package kube
 
 service: [ID=_]: {
@@ -295,7 +354,6 @@ deployment: [ID=_]: {
 		}
 	}
 }
-EOF
 ```
 
 By replacing the service and deployment name with `[ID=_]` we have changed the
@@ -330,18 +388,29 @@ assumptions about which of the fields that can be mutually derived from each
 other a user of the template will want to specify.
 -->
 
-Let's compare the result of merging our new template to our original snapshot.
+#### :arrow_right: Test the template
+
+Let's compare the result of merging our new template to our original snapshot by running:
+
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot2
+```
+
+This command fails, showing us this (truncated) error message:
 
 ```
-$ cue eval -c ./... >snapshot2
-// /workdir/services/mon/alertmanager
+// :kube
 deployment.alertmanager.spec.template.metadata.labels.component: incomplete value string:
     ./kube.cue:36:16
 service.alertmanager.metadata.labels.component: incomplete value string:
     ./kube.cue:11:15
 service.alertmanager.spec.selector.component: incomplete value string:
     ./kube.cue:11:15
-...
+// :kube
+service."node-exporter".metadata.labels.component: incomplete value string:
+    ./kube.cue:11:15
+[ ... truncated ... ]
 ```
 
 Oops.
@@ -349,62 +418,90 @@ The alert manager does not specify the `component` label.
 This demonstrates how constraints can be used to catch inconsistencies
 in your configurations.
 
-As there are very few objects that do not specify this label, we will modify
+#### :arrow_right: Fix the template
+
+As there are very few objects that do *not* specify this label, we will modify
 the configurations to include them everywhere.
 We do this by setting a newly defined top-level field in each directory
 to the directory name and modify our master template file to use it.
 
-<!--
-```
-$ cue add */kube.cue -p kube --list <<EOF
-#Component: "{{.DisplayPath}}"
-EOF
-```
--->
+Run ths script to edit your files inline, and to add some CUE files to each
+directory:
 
-```
+:computer: `terminal`
+```sh
 # set the component label to our new top-level field
-$ sed -i.bak 's/component:.*string/component: #Component/' kube.cue
-$ rm kube.cue.bak
+sed -i.bak 's/component:.*string/component: #Component/' kube.cue
+rm kube.cue.bak
 
 # add the new top-level field to our previous template definitions
-$ cat <<EOF >> kube.cue
+cat <<EOF >> kube.cue
 
 #Component: string
 EOF
 
 # add a file with the component label to each directory
-$ ls -d */ | sed 's/.$//' | xargs -I DIR sh -c 'cd DIR; echo "package kube
+ls -d */ | sed 's/.$//' | xargs -I DIR sh -c 'cd DIR; echo "package kube
 
 #Component: \"DIR\"
 " > kube.cue; cd ..'
 
 # format the files
-$ cue fmt kube.cue */kube.cue
+cue fmt kube.cue */kube.cue
 ```
 
-Let's try again to see if it is fixed:
+#### :arrow_right: Test the template again
 
-```
-$ cue eval -c ./... >snapshot2
-$ diff -wu snapshot snapshot2
-...
-```
+Let's see if we've fixed the template:
 
-Except for having more consistent labels and some reordering, nothing changed.
-We are happy and save the result as the new baseline.
-
-```
-$ cp snapshot2 snapshot
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot2
+diff -w --side-by-side snapshot snapshot2
 ```
 
-The corresponding boilerplate can now be removed with `cue trim`.
+This shows us that, apart from `snapshot2` having more consistent labels and
+some reordering, nothing has materially changed between `snapshot` and
+`snapshot2`.
+
+#### :arrow_right: Save the result as the new baseline
+
+:computer: `terminal`
+```sh
+cp snapshot2 snapshot
+```
+
+#### :arrow_right: Remove boilerplate
+
+Much boilerplate config, now implied by the content in the template, can now be
+removed with `cue trim`.
+
+First, check the total number of lines across all your `kube.cue` files, before
+boilerplate removal:
+
+:computer: `terminal`
+```sh
+find . | grep kube.cue | xargs wc -l | tail -1
+```
+
+This will show something like ...
 
 ```
-$ find . | grep kube.cue | xargs wc -l | tail -1
  1887 total
-$ cue trim ./...
-$ find . | grep kube.cue | xargs wc -l | tail -1
+```
+
+Now use `cue trim` to remove the boilerplate, and recheck the number of lines
+still present:
+
+:computer: `terminal`
+```sh
+cue trim ./...
+find . | grep kube.cue | xargs wc -l | tail -1
+```
+
+You should see a significant reduction:
+
+```
  1312 total
 ```
 
@@ -412,21 +509,29 @@ $ find . | grep kube.cue | xargs wc -l | tail -1
 by templates or comprehensions.
 In doing so it removed over 500 lines of configuration, or over 30%!
 
-The following is proof that nothing changed semantically:
+#### :arrow_right: Verify boilerplate removal
 
-```
-$ cue eval -c ./... >snapshot2
-$ diff -wu snapshot snapshot2 | wc -l
-0
+Verify that nothing changed semantically by running:
+
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot2
+diff -wu snapshot snapshot2 | wc -l
 ```
 
-We can do better, though.
+The number of lines reported will be 0.
+
+#### :arrow_right: Improve the template
+
+We can do better.
+
 A first thing to note is that DaemonSets and StatefulSets share a similar
 structure to Deployments.
-We generalize the top-level template as follows:
+We generalize the top-level template as follows by appending to `kube.cue`:
 
-```
-$ cat <<EOF >> kube.cue
+:computer: `terminal`
+```sh
+cat <<EOF >> kube.cue
 
 daemonSet: [ID=_]: _spec & {
 	apiVersion: "apps/v1"
@@ -468,7 +573,7 @@ _spec: {
 	}
 }
 EOF
-$ cue fmt
+cue fmt
 ```
 
 The common configuration has been factored out into `_spec`.
@@ -476,17 +581,20 @@ We introduced `_name` to aid both specifying and referring
 to the name of an object.
 For completeness, we added `configMap` as a top-level entry.
 
-Note that we have not yet removed the old definition of deployment.
+Note that we have not yet removed the old definition of `deployment`.
 This is fine.
 As it is equivalent to the new one, unifying them will have no effect.
 We leave its removal as an exercise to the reader.
 
+#### :arrow_right: Improve the template further
+
 Next we observe that all deployments, stateful sets and daemon sets have
 an accompanying service which shares many of the same fields.
-We add:
+We again add to the template in `kube.cue`:
 
-```
-$ cat <<EOF >> kube.cue
+:computer: `terminal`
+```sh
+cat <<EOF >> kube.cue
 
 // Define the _export option and set the default to true
 // for all ports defined in all containers.
@@ -512,7 +620,7 @@ for x in [deployment, daemonSet, statefulSet] for k, v in x {
 	}
 }
 EOF
-$ cue fmt
+cue fmt
 ```
 
 This example introduces a few new concepts.
@@ -542,44 +650,60 @@ to include them in the service and explicitly set this to false
 for the respective ports in `infra/events`, `infra/tasks`, and `infra/watcher`.
 
 For the purpose of this tutorial, here are some quick patches:
-```
-$ cat <<EOF >>infra/events/kube.cue
+
+:computer: `terminal`
+```sh
+cat <<EOF >>infra/events/kube.cue
 
 deployment: events: spec: template: spec: containers: [{ ports: [{_export: false}, _] }]
 EOF
-$ cat <<EOF >>infra/tasks/kube.cue
+cat <<EOF >>infra/tasks/kube.cue
 
 deployment: tasks: spec: template: spec: containers: [{ ports: [{_export: false}, _] }]
 EOF
-$ cat <<EOF >>infra/watcher/kube.cue
+cat <<EOF >>infra/watcher/kube.cue
 
 deployment: watcher: spec: template: spec: containers: [{ ports: [{_export: false}, _] }]
 EOF
 ```
+
 In practice it would be more proper form to add this field in the original
 port declaration.
+
+#### :arrow_right: Verify the template improvement
 
 We verify that all changes are acceptable and store another snapshot.
 Then we run trim to further reduce our configuration:
 
+:computer: `terminal`
+```sh
+cue trim ./...
+find . | grep kube.cue | xargs wc -l | tail -1
 ```
-$ cue trim ./...
-$ find . | grep kube.cue | xargs wc -l | tail -1
- 1242 total
-```
-This is after removing the rewritten and now redundant deployment definition.
 
-We shaved off almost another 100 lines, even after adding the template.
-You can verify that the service definitions are now gone in most of the files.
+After removing the rewritten and now redundant deployment definition we shaved
+off almost another 100 lines, even after adding the template. You can verify
+that the service definitions are now gone in most of the files.
 What remains is either some additional configuration, or inconsistencies that
 should probably be cleaned up.
 
-But we have another trick up our sleeve.
+#### :arrow_right: Collapse single element structs
+
+We have another trick up our sleeve.
+
 With the `-s` or `--simplify` option we can tell `trim` or `fmt` to collapse
-structs with a single element onto a single line. For instance:
+structs with a single element onto a single line.
+
+For example, check the top of `frontend/breaddispatcher/kube.cue`:
+
+:computer: `terminal`
+```sh
+head frontend/breaddispatcher/kube.cue
+```
+
+This will show something similar to:
 
 ```
-$ head frontend/breaddispatcher/kube.cue
 package kube
 
 deployment: breaddispatcher: {
@@ -590,8 +714,19 @@ deployment: breaddispatcher: {
 					"prometheus.io.scrape": "true"
 					"prometheus.io.port":   "7080"
 				}
-$ cue trim ./... -s
-$ head -7 frontend/breaddispatcher/kube.cue
+```
+
+Now use the `cue trim` `-s` flag:
+
+:computer: `terminal`
+```sh
+cue trim ./... -s
+head -7 frontend/breaddispatcher/kube.cue
+```
+
+... which will *now* show:
+
+```
 package kube
 
 deployment: breaddispatcher: spec: template: {
@@ -599,21 +734,26 @@ deployment: breaddispatcher: spec: template: {
 		"prometheus.io.scrape": "true"
 		"prometheus.io.port":   "7080"
 	}
-$ find . | grep kube.cue | xargs wc -l | tail -1
- 1090 total
+```
+
+Check the resulting line reduction across the entire config:
+
+:computer: `terminal`
+```sh
+find . | grep kube.cue | xargs wc -l | tail -1
 ```
 
 Another 150 lines lost!
 Collapsing lines like this can improve the readability of a configuration
 by removing considerable amounts of punctuation.
 
-We save the result as the new baseline:
+#### :arrow_right: Save the result as the new baseline
 
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot2
+cp snapshot2 snapshot
 ```
-$ cue eval -c ./... >snapshot2
-$ cp snapshot2 snapshot
-```
-
 
 ### Repeat for several subdirectories
 
@@ -623,8 +763,7 @@ services and deployments.
 In addition, we defined a directory-specific label.
 In this section we will look into generalizing the objects per directory.
 
-
-#### Directory `frontend`
+#### :arrow_right: Template the `frontend` directory
 
 We observe that all deployments in subdirectories of `frontend`
 have a single container with one port,
@@ -633,8 +772,9 @@ Also, most have two prometheus-related annotations, while some have one.
 We leave the inconsistencies in ports, but add both annotations
 unconditionally.
 
-```
-$ cat <<EOF >> frontend/kube.cue
+:computer: `terminal`
+```sh
+cat <<EOF >> frontend/kube.cue
 
 deployment: [string]: spec: template: {
 	metadata: annotations: {
@@ -646,11 +786,16 @@ deployment: [string]: spec: template: {
 	}]
 }
 EOF
-$ cue fmt ./frontend
+cue fmt ./frontend
 
 # check differences
-$ cue eval -c ./... >snapshot2
-$ diff -wu snapshot snapshot2
+cue eval -c ./... >snapshot2
+diff -wu snapshot snapshot2
+```
+
+This should show something similar to ...
+
+```
 --- snapshot	2022-02-21 06:04:10.919832150 +0000
 +++ snapshot2	2022-02-21 06:04:11.907780310 +0000
 @@ -188,6 +188,7 @@
@@ -669,15 +814,17 @@ $ diff -wu snapshot snapshot2
                      }
                      labels: {
                          app:       "valeter"
-$ cp snapshot2 snapshot
 ```
 
-Two lines with annotations added, improving consistency.
+The only difference is that two lines have had annotations added, improving
+consistency.
 
-```
-$ cue trim ./frontend/... -s
-$ find . | grep kube.cue | xargs wc -l | tail -1
- 1046 total
+Trim, and check the resulting line reduction across the entire config:
+
+:computer: `terminal`
+```sh
+cue trim ./frontend/... -s
+find . | grep kube.cue | xargs wc -l | tail -1
 ```
 
 Another 40 odd lines removed.
@@ -685,15 +832,15 @@ We may have gotten used to larger reductions, but at this point there is just
 not much left to remove: in some of the frontend files there are only 4 lines
 of configuration left.
 
-We save the result as the new baseline:
+#### :arrow_right: Save the result as the new baseline
 
+:computer: `terminal`
+```sh
+cue eval -c ./... >snapshot2
+cp snapshot2 snapshot
 ```
-$ cue eval -c ./... >snapshot2
-$ cp snapshot2 snapshot
-```
 
-
-#### Directory `kitchen`
+#### :arrow_right: Template the `kitchen` directory
 
 In this directory we observe that all deployments have without exception
 one container with port `8080`, all have the same liveness probe,
@@ -702,8 +849,9 @@ two or three disks with similar patterns.
 
 Let's add everything but the disks for now:
 
-```
-$ cat <<EOF >> kitchen/kube.cue
+:computer: `terminal`
+```sh
+cat <<EOF >> kitchen/kube.cue
 
 deployment: [string]: spec: template: {
 	metadata: annotations: "prometheus.io.scrape": "true"
@@ -722,7 +870,7 @@ deployment: [string]: spec: template: {
 	}]
 }
 EOF
-$ cue fmt ./kitchen
+cue fmt ./kitchen
 ```
 
 A diff reveals that one prometheus annotation was added to a service.
@@ -734,8 +882,9 @@ We prefer to keep these two definitions together.
 We take the volumes definition from `expiditer` (the first config in that
 directory with two disks), and generalize it:
 
-```
-$ cat <<EOF >> kitchen/kube.cue
+:computer: `terminal`
+```sh
+cat <<EOF >> kitchen/kube.cue
 
 deployment: [ID=_]: spec: template: spec: {
 	_hasDisks: *true | bool
@@ -765,14 +914,14 @@ deployment: [ID=_]: spec: template: spec: {
 }
 EOF
 
-$ cat <<EOF >> kitchen/souschef/kube.cue
+cat <<EOF >> kitchen/souschef/kube.cue
 
 deployment: souschef: spec: template: spec: {
 	_hasDisks: false
 }
 
 EOF
-$ cue fmt ./kitchen/...
+cue fmt ./kitchen/...
 ```
 
 This template definition is not ideal: the definitions are positional, so if
@@ -790,16 +939,17 @@ Later in this document we introduce a manually optimized configuration.
 We add the two disk by default and define a `_hasDisks` option to opt out.
 The `souschef` configuration is the only one that defines no disks.
 
-```
-$ cue trim -s ./kitchen/...
+#### :arrow_right: Trim and check the differences
+
+:computer: `terminal`
+```sh
+cue trim -s ./kitchen/...
 
 # check differences
-$ cue eval -c ./... >snapshot2
-$ diff -wu snapshot snapshot2
-...
-$ cp snapshot2 snapshot
-$ find . | grep kube.cue | xargs wc -l | tail -1
-  925 total
+cue eval -c ./... >snapshot2
+diff -wu snapshot snapshot2
+cp snapshot2 snapshot
+find . | grep kube.cue | xargs wc -l | tail -1
 ```
 
 The diff shows that we added the `_hasDisks` option, but otherwise reveals no
@@ -814,7 +964,7 @@ specific configuration.
 Leaving them as is gives a clear signal that a configuration is inconsistent.
 
 
-### Conclusion of Quick 'n Dirty tutorial
+### Quick 'n Dirty tutorial: conclusions
 
 There is still some gain to be made with the other directories.
 At nearly a 1000-line, or 55%, reduction, we leave the rest as an exercise to
@@ -833,7 +983,7 @@ possible by this property.
 Also this would be harder to do with inheritance-based configuration languages.
 
 
-## Define commands
+## Defining commands
 
 The `cue export` command can be used to convert the created configuration back
 to JSON.
@@ -872,18 +1022,19 @@ and environment variables, random generators, file listings, and so on.
 
 We define the following tools for our example:
 
-- ls: list the Kubernetes objects defined in our configuration
-- dump: dump all selected objects as a YAML stream
-- create: send all selected objects to `kubectl` for creation
+- `ls`: list the Kubernetes objects defined in our configuration
+- `dump`: dump all selected objects as a YAML stream
+- `create`: send all selected objects to `kubectl` for creation
 
 ### Preparations
 
 To work with Kubernetes we need to convert our map of Kubernetes objects
 back to a simple list.
-We create the tool file to do just that.
 
-```
-$ cat <<EOF > kube_tool.cue
+#### :arrow_right: Create the `kube_tool.cue` file
+
+:floppy_disk: `kube_tool.cue`
+```cue
 package kube
 
 objects: [ for v in objectSets for x in v {x}]
@@ -895,7 +1046,6 @@ objectSets: [
 	daemonSet,
 	configMap,
 ]
-EOF
 ```
 
 ### Listing objects
@@ -906,10 +1056,12 @@ a set of tasks.
 Examples tasks are load or write a file, dump something to the console,
 download a web page, or execute a command.
 
-We start by defining the `ls` command which dumps all our objects
+#### :arrow_right: Define the `ls` command
 
-```
-$ cat <<EOF > ls_tool.cue
+The `ls` command will dump all our objects. Place it in the `ls_tool.cue` file:
+
+:floppy_disk: `ls_tool.cue`
+```cue
 package kube
 
 import (
@@ -932,25 +1084,24 @@ command: ls: {
 		contents: task.print.text
 	}
 }
-EOF
 ```
 <!-- TODO: use "let" once implemented-->
 
 NOTE: THE API OF THE TASK DEFINITIONS WILL CHANGE.
 Although we may keep supporting this form if needed.
 
-The command is now available in the `cue` tool:
+#### :arrow_right: Test the `ls` command
+
+Check that the `ls` command is now available in the `cue` tool by running:
+
+:computer: `terminal`
+```sh
+cue cmd ls ./frontend/maitred
+```
+
+This will output:
 
 ```
-$ cue cmd ls ./frontend/maitred
-Service      frontend   maitred
-Deployment   frontend   maitred
-```
-
-As long as the name does not conflict with an existing command it can be
-used as a top-level command as well:
-```
-$ cue ls ./frontend/maitred
 Service      frontend   maitred
 Deployment   frontend   maitred
 ```
@@ -967,8 +1118,14 @@ but our per-type maps of Kubernetes objects should be free of conflict
 (if there is, we have a problem with Kubernetes down the line).
 A merge thus gives us a unified view of all objects.
 
+:computer: `terminal`
+```sh
+cue cmd ls ./...
 ```
-$ cue ls ./...
+
+This will show something similar to ...
+
+```
 Service       frontend   bartender
 Service       frontend   breaddispatcher
 Service       frontend   host
@@ -979,26 +1136,21 @@ Service       frontend   waterdispatcher
 Service       infra      download
 Service       infra      etcd
 Service       infra      events
-...
-
-Deployment    proxy      nginx
-StatefulSet   infra      etcd
-DaemonSet     mon        node-exporter
-ConfigMap     mon        alertmanager
-ConfigMap     mon        prometheus
-ConfigMap     proxy      authproxy
-ConfigMap     proxy      nginx
+[ ... truncated ... ]
 ```
 
 ### Dumping a YAML Stream
+
+#### :arrow_right: Define the `dump` command
 
 The following adds a command to dump the selected objects as a YAML stream.
 
 <!--
 TODO: add command line flags to filter object types.
 -->
-```
-$ cat <<EOF > dump_tool.cue
+
+:floppy_disk: `dump_tool.cue`
+```cue
 package kube
 
 import (
@@ -1011,7 +1163,6 @@ command: dump: {
 		text: yaml.MarshalStream(objects)
 	}
 }
-EOF
 ```
 
 <!--
@@ -1022,16 +1173,17 @@ or without conversions:
 command dump task print: cli.Print & {text: yaml.MarshalStream(objects)}
 -->
 
-The `MarshalStream` command converts the list of objects to a '`---`'-separated
-stream of YAML values.
-
+The `MarshalStream` function converts the list of objects to a stream of YAML
+values separated by `---`.
 
 ### Creating Objects
 
+#### :arrow_right: Define the `create` command
+
 The `create` command sends a list of objects to `kubectl create`.
 
-```
-$ cat <<EOF > create_tool.cue
+:floppy_disk: `create_tool.cue`
+```cue
 package kube
 
 import (
@@ -1051,7 +1203,6 @@ command: create: {
 		text: task.kube.stdout
 	}
 }
-EOF
 ```
 
 This command has two tasks, named `kube` and `display`.
@@ -1060,8 +1211,18 @@ The `cue` tool does a static analysis of the dependencies and runs all
 tasks which dependencies are satisfied in parallel while blocking tasks
 for which an input is missing.
 
+#### :arrow_right: Test the `create` command
+
+Running:
+
+:computer: `terminal`
+```sh
+cue cmd create ./frontend/...
 ```
-$ cue create ./frontend/...
+
+... will display:
+
+```
 service/bartender created (dry run)
 service/breaddispatcher created (dry run)
 service/host created (dry run)
@@ -1072,10 +1233,7 @@ service/waterdispatcher created (dry run)
 deployment.apps/bartender created (dry run)
 deployment.apps/breaddispatcher created (dry run)
 deployment.apps/host created (dry run)
-deployment.apps/maitred created (dry run)
-deployment.apps/valeter created (dry run)
-deployment.apps/waiter created (dry run)
-deployment.apps/waterdispatcher created (dry run)
+[ ... truncated ... ]
 ```
 
 A production real-life version of this could should omit the `--dry-run=client` flag
@@ -1083,18 +1241,24 @@ of course.
 
 ### Extract CUE templates directly from Kubernetes Go source
 
-In order for `cue get go` to generate the CUE templates from Go sources, you first need to have the sources locally:
+#### :arrow_right: Generate Kubernetes CUE schemata
 
+In order for `cue get go` to generate the CUE templates from Go sources the
+sources must be present locally beforehand.
+
+:computer: `terminal`
+```sh
+go get k8s.io/api/apps/v1@v0.23.4
+cue get go k8s.io/api/apps/v1
 ```
-$ go get k8s.io/api/apps/v1@v0.23.4
-$ cue get go k8s.io/api/apps/v1
 
-```
+#### :arrow_right: Use Kubernetes CUE schemata
 
-Now that we have the Kubernetes definitions in our module, we can import and use them:
+Now that we have the Kubernetes definitions in our module, we can import and
+use them. Create the `k8s_defs.cue` file:
 
-```
-$ cat <<EOF > k8s_defs.cue
+:floppy_disk: `k8s_defs.cue`
+```cue
 package kube
 
 import (
@@ -1106,12 +1270,12 @@ service: [string]:     v1.#Service
 deployment: [string]:  apps_v1.#Deployment
 daemonSet: [string]:   apps_v1.#DaemonSet
 statefulSet: [string]: apps_v1.#StatefulSet
-EOF
 ```
 
-And, finally, we'll format again:
+Finally, we'll format our CUE files:
 
-```
+:computer: `terminal`
+```sh
 cue fmt
 ```
 
@@ -1129,7 +1293,7 @@ and more esoteric one in another and then combine them without fear that one
 will override the other.
 We will take this approach in this section.
 
-The end result of this tutorial is in the `manual` directory.
+The end result of this tutorial is in the top-level `manual` directory.
 In the next sections we will show how to get there.
 
 
@@ -1143,8 +1307,7 @@ the Kubernetes object upon conversion.
 
 We define one top-level file with our generic definitions.
 
-```
-// file cloud.cue
+```cue
 package cloud
 
 service: [Name=_]: {
@@ -1187,7 +1350,7 @@ Section "Quick 'n Dirty".
 The first step we took is to eliminate `statefulSet` and `daemonSet` and
 rather just have a `deployment` allowing different kinds.
 
-```
+```cue
 deployment: [Name=_]: _base & {
     name:     *Name | string
     ...
@@ -1200,7 +1363,7 @@ This also eliminates the need for `_spec`.
 The next step is to pull common fields, such as `image` to the top level.
 
 Arguments can be specified as a map.
-```
+```cue
     arg: [string]: string
     args: [ for k, v in arg { "-\(k)=\(v)" } ] | [...string]
 ```
@@ -1209,7 +1372,7 @@ If order matters, users could explicitly specify the list as well.
 
 For ports we define two simple maps from name to port number:
 
-```
+```cue
     // expose port defines named ports that is exposed in the service
     expose: port: [string]: int
 
@@ -1226,7 +1389,7 @@ In most cases mapping strings to string suffices.
 The testdata uses other options though.
 We define a simple `env` map and an `envSpec` for more elaborate cases:
 
-```
+```cue
     env: [string]: string
 
     envSpec: [string]: {}
@@ -1243,7 +1406,7 @@ Finally, our assumption that there is one container per deployment allows us
 to create a single definition for volumes, combining the information for
 volume spec and volume mount.
 
-```
+```cue
     volume: [Name=_]: {
         name:       *Name | string
         mountPath:  string
@@ -1265,7 +1428,7 @@ The service definition is straightforward.
 As we eliminated stateful and daemon sets, the field comprehension to
 automatically derive a service is now a bit simpler:
 
-```
+```cue
 // define services implied by deployments
 service: {
     for k, spec in deployment {
@@ -1296,7 +1459,7 @@ The tailorings for this specific project (the labels) are defined
 
 Converting services is fairly straightforward.
 
-```
+```cue
 kubernetes: services: {
     for k, x in service {
         "\(k)": x.kubernetes & {
@@ -1333,19 +1496,22 @@ leaf directories contain string interpolations.
 ### Metrics
 
 The fully written out manual configuration can be found in the `manual`
-subdirectory.
-Running our usual count yields
+directory.
+
+Check the total line count of the `manual` directory:
+
+:computer: `terminal`
+```sh
+find manual | grep kube.cue | xargs wc -l | tail -1
 ```
-$ find . | grep kube.cue | xargs wc | tail -1
-     542    1190   11520 total
-```
-This does not count our conversion templates.
+
+The 542 lines reported do not count our conversion templates.
 Assuming that the top-level templates are reusable, and if we don't count them
 for both approaches, the manual approach shaves off about another 150 lines.
 If we count the templates as well, the two approaches are roughly equal.
 
 
-### Conclusions Manual Configuration
+### Manual configuration: conclusions
 
 We have shown that we can further compact a configuration by manually
 optimizing template files.

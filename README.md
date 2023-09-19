@@ -6,7 +6,8 @@ This repo contains examples of real-world use of CUE, integrating with
 ## Index
 
 - 001: [Importing GitHub Actions workflows](001_github_actions_importing_workflows/README.md)
-- 002: [Validating Terraform plans with CUE](002_terraform_plan/README/md)
+- 002: [Validating Terraform plans with CUE](002_terraform_plan/README.md)
+- 003: [Convert Kubernetes configurations into CUE](003_kubernetes_tutorial/README.md)
 
 ## Contributing
 
