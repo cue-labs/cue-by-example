@@ -1,7 +1,7 @@
-# Validating Terraform plan output
+# Writing Terraform plan policies with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
-This document is an adaptation of an
+This guide is an adaptation of an
 [OPA Terraform tutorial](https://www.openpolicyagent.org/docs/latest/terraform/)
 into CUE.
 
