@@ -1,17 +1,19 @@
-# Cue By Example
+# CUE By Example - `** EXPERIMENTAL **`
 
-This repo contains examples of real-world use of CUE, integrating with
-3rd-party tools, services, and systems.
+This repo contains examples of real-world use of [CUE](https://cuelang.org),
+integrating with 3rd-party tools, services, and systems.
 
 ## Index
 
-- 001: [Importing GitHub Actions workflows](001_github_actions_importing_workflows/README.md)
-- 002: [Validating Terraform plans with CUE](002_terraform_plan/README.md)
-- 003: [Convert Kubernetes configurations into CUE](003_kubernetes_tutorial/README.md)
+- 001: [Driving GitHub Actions workflows with CUE](001_github_actions_importing_workflows/README.md)
+- 002: [Writing Terraform plan policies with CUE](002_terraform_plan/README.md)
+- 003: [Controlling Kubernetes with CUE](003_kubernetes_tutorial/README.md)
 
 ## Contributing
 
-Please use [000_template/README.md](000_template/README.md) as a template when
-contributing documents to this repo.
+Please use [`000_template/README.md`](000_template/README.md) as a template when
+contributing additional guides to this repo.
 
-TODO: contribution guidelines, etc.
+## Contribution guidelines
+
+TODO.

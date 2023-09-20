@@ -1,4 +1,4 @@
-# Importing GitHub Actions workflow files into CUE
+# Driving GitHub Actions workflows with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
 This guide explains how to convert GitHub Actions workflow files from YAML to

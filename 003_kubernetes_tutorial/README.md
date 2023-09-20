@@ -1,4 +1,4 @@
-# Kubernetes tutorial
+# Controlling Kubernetes with CUE
 <sup>by [The CUE Project](https://cuelang.org/)</sup>
 
 ## Introduction

@@ -1,4 +1,4 @@
-# Validating Terraform plan output with idiomatic CUE
+# Writing Terraform plan policies with CUE (idiomatically!)
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
 ## Prerequisites
