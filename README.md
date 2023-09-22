@@ -1,4 +1,4 @@
-# CUE By Example - `** EXPERIMENTAL **`
+# CUE By Example - **EXPERIMENTAL**
 
 This repo contains examples of real-world use of [CUE](https://cuelang.org),
 integrating with 3rd-party tools, services, and systems.
@@ -8,6 +8,7 @@ integrating with 3rd-party tools, services, and systems.
 - 001: [Driving GitHub Actions workflows with CUE](001_github_actions_importing_workflows/README.md)
 - 002: [Writing Terraform plan policies with CUE](002_terraform_plan/README.md)
 - 003: [Controlling Kubernetes with CUE](003_kubernetes_tutorial/README.md)
+- 004: [Managing Mythic Beasts DNS zones with CUE](004_mythic_beasts_dns/README.md)
 
 ## Contributing
 
