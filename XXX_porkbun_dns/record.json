@@ -1,0 +1,9 @@
+{
+	"secretapikey": "$PORKBUN_API_SECRET",
+	"apikey": "$PORKBUN_API_KEY_ID",
+	"name": "foo.bar.baz",
+	"type": "CNAME",
+	"content": "www.example.com",
+	"ttl": 600,
+	"prio": 10
+}
