@@ -19,10 +19,10 @@ command: one_time_import: {
 	}
 	for zone_name, records in _porkbun_zone_records
 	for id, record in records {
-		api_request="import_\(zone_name)_\(id)": http.Post & {
-			url: " https://porkbun.com/api/json/v3/dns/create/\(zone_name)"
+		api_request="import_\(id)": http.Post & {
+			url: "https://porkbun.com/api/json/v3/dns/create/\(zone_name)"
 			request: body:        json.Marshal(record & auth)
-			response: statusCode: 200
+			response: statusCode: 200 | 400
 		}
 		"response_\(id)": cli.Print & {
 			text: json.Marshal({(id): json.Unmarshal(api_request.response.body)})
@@ -43,7 +43,7 @@ _porkbun_zone_records: {
 			for host_name, record_types in zone_config
 			for record_type, records in record_types
 			for record_content, record in records
-			let id = "\(host_name)_\(record_type)_\(record_content)" {
+			let id = "\(host_name).\(zone_name):\(record_type):\(record_content)" {
 				(id): {
 					if record_type == "ANAME" {
 						type: "ALIAS"
