@@ -1,6 +1,6 @@
 # Template
 
-Please use this file as a template and guide for new Cue By Example documents.
+Please use this file as a template and guide for new cue-by-example documents.
 
 ## Conventions
 
