@@ -1,4 +1,4 @@
-# CUE By Example - **EXPERIMENTAL**
+# cue-by-example - **EXPERIMENTAL**
 
 This repo contains examples of real-world use of [CUE](https://cuelang.org),
 integrating with 3rd-party tools, services, and systems.
