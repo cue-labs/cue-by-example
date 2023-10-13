@@ -9,6 +9,7 @@ integrating with 3rd-party tools, services, and systems.
 - 002: [Writing Terraform plan policies with CUE](002_terraform_plan/README.md)
 - 003: [Controlling Kubernetes with CUE](003_kubernetes_tutorial/README.md)
 - 004: [Managing Mythic Beasts DNS zones with CUE](004_mythic_beasts_dns/README.md)
+- 005: [Driving GitLab CI/CD pipelines with CUE](005_gitlab_ci/README.md)
 
 ## Contributing
 
