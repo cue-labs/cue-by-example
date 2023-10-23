@@ -12,7 +12,8 @@ integrating with 3rd-party tools, services, and systems.
 
 ## Contributing
 
-Please use [`000_template/README.md`](000_template/README.md) as a template when
+First please read the [style guide](000_template/README.md), and then use
+[000_template/template.md](000_template/template.md) as a template when
 contributing additional guides to this repo.
 
 ## Contribution guidelines
