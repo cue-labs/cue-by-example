@@ -425,7 +425,7 @@ the configurations to include them everywhere.
 We do this by setting a newly defined top-level field in each directory
 to the directory name and modify our master template file to use it.
 
-Run ths script to edit your files inline, and to add some CUE files to each
+Run this script to edit your files inline, and to add some CUE files to each
 directory:
 
 :computer: `terminal`
