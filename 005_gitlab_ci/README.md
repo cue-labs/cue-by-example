@@ -11,9 +11,7 @@ know you're managing your pipelines with CUE.
 
 ## Prerequisites
 
-- You have
-  [CUE installed](https://alpha.cuelang.org/docs/introduction/installation/)
-  locally. This allows you to run `cue` commands.
+- You have [`cue` installed](https://cuelang.org/docs/install/).
 - You have a GitLab pipeline file.
   - The example shown throughout this guide uses the state of a specific commit
     from the
@@ -24,10 +22,8 @@ know you're managing your pipelines with CUE.
     It is used here as it represents a reasonably complex example of a GitLab
     pipeline file.
 - You have [`git` installed](https://git-scm.com/downloads).
-<!-- curl isn't needed until the upstream JSONschema can be imported.
 - You have [`curl` installed](https://curl.se/dlwiz/), or can fetch a remote
   file some other way.
--->
 
 ## Steps
 
@@ -61,7 +57,8 @@ Use `cue` to import your YAML pipeline file:
 
 :computer: `terminal`
 ```sh
-cue import .gitlab-ci.yml --with-context -p gitlab -f -l pipelines: -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))' -o gitlab-ci.cue
+cue import .gitlab-ci.yml --with-context -p gitlab -f -l pipelines: \
+  -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))' -o gitlab-ci.cue
 ```
 
 If your project uses a different name for your pipeline file then use that name
@@ -127,69 +124,38 @@ mv gitlab-ci.cue internal/ci/gitlab
 
 #### :arrow_right: Create a pipeline schema
 
-<!-- The upstream schema isn't importable at the moment, cf. https://github.com/cue-lang/cue/issues/2654
-
 Fetch a schema for GitLab pipelines, as defined by the GitLab project, and
 place it in the `internal/ci/gitlab` directory:
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/d86a7ccc6233aaaf61d9721a537098c3e47fa7c5/app/assets/javascripts/editor/schema/ci.json
+curl -o internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/7aa6170c4c81a98f372d7c52f3918858c4b69cca/app/assets/javascripts/editor/schema/ci.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
 process is reproducible.
 
--->
+Convert the GitLab schema from JSON Schema to CUE:
 
-Create a basic CUE schema for GitLab pipelines, adapted from [GitLab's CI/CD
-documentation](https://docs.gitlab.com/ee/ci/yaml/index.html), and place it in
-the `internal/ci/gitlab` directory:
-
-:floppy_disk: `internal/ci/gitlab/gitlab.cicd.pipeline.schema.cue`
-
-```CUE
-package gitlab
-
-_globalKeywords: ["default", "include", "stages", "variables", "workflow"]
-_#job: _
-#Pipeline: {
-	default?: {
-		after_script?:  _
-		artifacts?:     _
-		before_script?: _
-		cache?:         _
-		hooks?:         _
-		id_tokens?:     _
-		image?:         _
-		interruptible?: _
-		retry?:         _
-		services?:      _
-		tags?:          _
-		timeout?:       _
-	}
-	include?: _
-	stages?: [...string]
-	variables?:                                  _
-	workflow?:                                   _
-	[and([ for _, v in _globalKeywords {!=v}])]: _#job
-}
+:computer: `terminal`
+```sh
+cue import internal/ci/gitlab/gitlab.cicd.pipeline.schema.json -p gitlab -l '#Pipeline:'
 ```
 
-|   :grey_exclamation: Info :grey_exclamation:   |
-|:---------------------------------------------- |
-| It would be great if we could use [GitLab's authoritative pipeline schema](https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json), here. Unfortunately, CUE's JSONSchema support can't import it currently. This is being tracked in [CUE Issue #2654](https://github.com/cue-lang/cue/issues/2654), and this guide should be updated once the issue is resolved.
+This command will create the file `internal/ci/gitlab/gitlab.cicd.pipeline.schema.cue`
+in the `gitlab` package, with the contents of the upstream schema placed in the
+field `#Pipeline`.
 
 #### :arrow_right: Apply the schema
 
 We need to tell CUE to apply the schema to the pipeline.
 
 To do this we'll create a file at `internal/ci/gitlab/pipelines.cue` in our
-example.
+example. However, if your earlier pipeline import *already* created a file with
+that same path and name, then simply select a different CUE filename that
+*doesn't* already exist.
 
-However, if your earlier pipeline import *already* created a file with that
-same path and name, then simply select a different CUE filename that *doesn't*
-already exist. Place the file in the `internal/ci/gitlab/` directory.
+Create the file in the `internal/ci/gitlab/` directory and add this CUE:
 
 :floppy_disk: `internal/ci/gitlab/pipelines.cue`
 
@@ -265,7 +231,7 @@ cue help cmd regenerate ./internal/ci/gitlab   # the "./" prefix is required
 The output of the `cue help` command **must** begin with the following:
 
 ```text
-Regenerate all pipeline files
+Regenerate pipeline files
 
 Usage:
   cue cmd regenerate [flags]
