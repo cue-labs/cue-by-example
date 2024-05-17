@@ -213,10 +213,10 @@ in the CUE sources, where users will see them), some unimportant YAML
 formatting may change, and a comment will be added at the top of each generated
 YAML file pointing users towards the new source of truth: CUE.
 
-#### :arrow_right: Create a CUE tool file
+#### :arrow_right: Create a CUE workflow command
 
-Create a CUE "tool" file at `internal/ci/buildkite/ci_tool.cue` and adapt the
-element commented with `TODO`:
+Create a CUE file at `internal/ci/buildkite/ci_tool.cue` containing the following workflow command.
+Adapt the element commented with `TODO`:
 
 :floppy_disk: `internal/ci/buildkite/ci_tool.cue`
 ```CUE
@@ -264,13 +264,13 @@ command: regenerate: {
 
 Make the modification indicated by the `TODO` comment.
 
-This tool will export each CUE-based pipeline back into its required YAML file,
+This workflow command will export each CUE-based pipeline back into its required YAML file,
 on demand.
 
-#### :arrow_right: Test the CUE tool file
+#### :arrow_right: Test the CUE workflow command
 
 With the modified `ci_tool.cue` file in place, check that the `regenerate`
-command is available **from a shell sitting at the repo root**. For example:
+workflow command is available **from a shell sitting at the repo root**. For example:
 
 :computer: `terminal`
 ```sh
@@ -289,11 +289,11 @@ Usage:
 
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
-| If you *don't* see the usage explanation for the `regenerate` command (or if you receive an error message) then your tool file isn't set up as CUE requires. Double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the root of the repository.
+| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then your tool file isn't set up as CUE requires. Double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the root of the repository.
 
 #### :arrow_right: Regenerate the YAML pipeline files
 
-Run the `regenerate` command to produce YAML pipeline files from CUE. For
+Run the `regenerate` workflow command to produce YAML pipeline files from CUE. For
 example:
 
 :computer: `terminal`

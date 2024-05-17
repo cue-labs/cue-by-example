@@ -19,7 +19,7 @@ In this tutorial we will address the following topics:
 1. hoist common patterns to parent directories
 1. use the tooling to rewrite CUE files to drop unnecessary fields
 1. repeat from step 2 for different subdirectories
-1. define commands to operate on the configuration
+1. define workflow commands to operate on the configuration
 1. extract CUE templates directly from Kubernetes Go source
 1. manually tailor the configuration
 1. map a Kubernetes configuration to `docker-compose` (TODO)
@@ -983,7 +983,7 @@ possible by this property.
 Also this would be harder to do with inheritance-based configuration languages.
 
 
-## Defining commands
+## Defining workflow commands
 
 The `cue export` command can be used to convert the created configuration back
 to JSON.
@@ -1001,13 +1001,13 @@ Advantages:
 
 - added domain knowledge that CUE may use for improved analysis,
 - only one language to learn,
-- easy discovery of commands,
+- easy discovery of workflow commands,
 - no further configuration required,
-- enforce uniform CLI standards across commands,
-- standardized commands across an organization.
+- enforce uniform CLI standards across workflow commands,
+- standardized workflow commands across an organization.
 
-Commands are defined in files ending with `_tool.cue` in the same package as
-where the configuration files are defined on which the commands should operate.
+Workflow commands are defined in files ending with `_tool.cue` in the same package as
+where the configuration files are defined on which the workflow commands should operate.
 Top-level values in the configuration are visible by the tool files
 as long as they are not shadowed by top-level fields in the tool files.
 Top-level fields in the tool files are not visible in the configuration files
@@ -1050,15 +1050,15 @@ objectSets: [
 
 ### Listing objects
 
-Commands are defined in the `command` section at the top-level of a tool file.
-A `cue` command defines command line flags, environment variables, as well as
+Workflow commands are defined in the `command` section at the top-level of a tool file.
+A `cue` workflow command defines command line flags, environment variables, as well as
 a set of tasks.
 Examples tasks are load or write a file, dump something to the console,
 download a web page, or execute a command.
 
-#### :arrow_right: Define the `ls` command
+#### :arrow_right: Define the `ls` workflow command
 
-The `ls` command will dump all our objects. Place it in the `ls_tool.cue` file:
+The `ls` workflow command will dump all our objects. Place it in the `ls_tool.cue` file:
 
 :floppy_disk: `ls_tool.cue`
 ```cue
@@ -1090,9 +1090,9 @@ command: ls: {
 NOTE: THE API OF THE TASK DEFINITIONS WILL CHANGE.
 Although we may keep supporting this form if needed.
 
-#### :arrow_right: Test the `ls` command
+#### :arrow_right: Test the `ls` workflow command
 
-Check that the `ls` command is now available in the `cue` tool by running:
+Check that the `ls` workflow command is now available in the `cue` tool by running:
 
 :computer: `terminal`
 ```sh
@@ -1141,9 +1141,9 @@ Service       infra      events
 
 ### Dumping a YAML Stream
 
-#### :arrow_right: Define the `dump` command
+#### :arrow_right: Define the `dump` workflow command
 
-The following adds a command to dump the selected objects as a YAML stream.
+The following adds a workflow command to dump the selected objects as a YAML stream.
 
 <!--
 TODO: add command line flags to filter object types.
@@ -1178,9 +1178,9 @@ values separated by `---`.
 
 ### Creating Objects
 
-#### :arrow_right: Define the `create` command
+#### :arrow_right: Define the `create` workflow command
 
-The `create` command sends a list of objects to `kubectl create`.
+The `create` workflow command sends a list of objects to `kubectl create`.
 
 :floppy_disk: `create_tool.cue`
 ```cue
@@ -1205,13 +1205,13 @@ command: create: {
 }
 ```
 
-This command has two tasks, named `kube` and `display`.
+This workflow command has two tasks, named `kube` and `display`.
 The `display` task depends on the output of the `kube` task.
 The `cue` tool does a static analysis of the dependencies and runs all
 tasks which dependencies are satisfied in parallel while blocking tasks
 for which an input is missing.
 
-#### :arrow_right: Test the `create` command
+#### :arrow_right: Test the `create` workflow command
 
 Running:
 

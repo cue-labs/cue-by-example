@@ -149,7 +149,7 @@ conditionally, as demonstrated above, so long as the `dynamic_steps` field
 ultimately contains an ordered list of the steps your pipeline needs to
 execute.
 
-#### :arrow_right: Create CUE tool
+#### :arrow_right: Create a CUE workflow command
 
 :floppy_disk: `internal/ci/buildkite/dynamic_tool.cue`
 ```CUE
@@ -234,7 +234,7 @@ pipeline's jobs. Make sure `cue` is available in the Buildkite agent's `PATH`.
 #### :arrow_right: Update the pipeline's definition
 
 In the Buildkite web UI, update the pipeline's settings so that its first step
-runs this command:
+runs this CUE workflow command:
 
 ```
 cue cmd emit_dynamic_steps ./internal/ci/buildkite:pipeline | buildkite-agent pipeline upload
@@ -283,7 +283,7 @@ pipeline command correctly, in this guide's
 "[Update the pipeline's definition](#arrow_right-update-the-pipelines-definition)"
 step.
 
-You can also use the following command in your local checkout of the
+You can also use the following workflow command in your local checkout of the
 repository. It displays the contents of the steps which will be passed back to
 Buildkite for execution:
 
