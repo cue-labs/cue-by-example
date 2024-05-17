@@ -349,12 +349,12 @@ _MythicBeastsZoneRecord: {
 As with `schema.cue`, `dns_tool.cue` is part of the system's implementation,
 and should be used as presented.
 
-`dns_tool.cue` contains a CUE script which performs the necessary API requests
-to replace all DNS zones' records. A CUE script is included here to provide a
+`dns_tool.cue` contains a CUE workflow command which performs the necessary API requests
+to replace all DNS zones' records. A CUE workflow command is included here to provide a
 way of using the `cue` command, by itself, to drive changes via the Mythic
 Beasts API.
 
-However, because using a CUE script to *perform* these requests isn't the main
+However, because using a CUE workflow command to *perform* these requests isn't the main
 point of this guide, you should feel free to swap it out for anything that
 suits your needs better - a shell script, a Golang utility, a Python script:
 any language will easily be able to make the necessary requests. 
@@ -411,12 +411,12 @@ Make sure to include **all** DNS records that already exist in your zones.
 
 #### :arrow_right: Validate the DNS records
 
-Use the `dump` CUE command to display all the records you've configured.
+Use the `dump` CUE workflow command to display all the records you've configured.
 
 :rotating_light::rotating_light::rotating_light:\
 **For each zone you've configured, ONLY the records displayed will exist after
 using this system. Every currently-existing record that's *missing* from the
-`dump` command's output will be REMOVED - so check the output against your
+`dump` workflow command's output will be REMOVED - so check the output against your
 current zone contents carefully!**\
 :rotating_light::rotating_light::rotating_light:
 
@@ -459,7 +459,7 @@ my-primary-domain.test:
 |:--------------------------------------- |
 | The API calls used by this guide **completely replace ALL existing records stored in a Mythic Beasts DNS zone**.<br>It is **not possible** to bring such a DNS zone *incrementally* under the control of the system outlined in this guide.<br><br>To use this guide safely, either use a test DNS zone with unimportant contents, or export the contents of a non-test zone and convert them *exhaustively and carefully* into the structured data format demonstrated in this guide.
 
-Having read the warning, above, invoke the CUE script as follows.
+Having read the warning, above, invoke the CUE workflow command as follows.
 
 *This will **replace** all DNS records across all the zones you've configured*:
 
