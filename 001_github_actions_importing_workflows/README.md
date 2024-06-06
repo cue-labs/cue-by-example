@@ -54,7 +54,7 @@ Use `cue` to import your YAML workflow files:
 
 :computer: `terminal`
 ```sh
-cue import ./.github/workflows/ --with-context -p github -f -l workflows: \ -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))'
+cue import ./.github/workflows/ --with-context -p github -f -l workflows: -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))'
 ```
 
 Check that a CUE file has been created for each YAML workflow in the
@@ -140,7 +140,7 @@ Import the schema into CUE:
 
 :computer: `terminal`
 ```sh
-cue import -f -l '#Workflow:' internal/ci/github/github.actions.workflow.schema.json
+cue import -f -l '#Workflow:' -p github internal/ci/github/github.actions.workflow.schema.json
 ```
 
 #### :arrow_right: Apply the schema
