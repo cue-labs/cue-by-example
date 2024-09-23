@@ -128,7 +128,7 @@ Fetch a schema for GitHub Actions workflows, as defined by the 3rd party
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/0a3e561da60ccc2fae1411fb5af2a94e9dc4ff6e/src/schemas/json/github-workflow.json
+curl -o internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/f728a2d857a938979f09b0a7f014fbe0bc1898ee/src/schemas/json/github-workflow.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -160,8 +160,13 @@ directory.
 ```
 package github
 
-// each member of the workflows struct must be a valid #Workflow
+// Each member of the workflows struct must be a valid #Workflow.
 workflows: [_]: #Workflow
+
+// Augment the imported #Workflow definition to enable successful evaluation.
+#Workflow: jobs?: [string]: steps?: [...(
+    {uses?: _|_} | {run?: _|_}),
+]
 ```
 
 ### Generate YAML from CUE
