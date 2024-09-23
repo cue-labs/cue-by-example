@@ -54,7 +54,7 @@ Use `cue` to import your YAML workflow files:
 
 :computer: `terminal`
 ```sh
-cue import ./.github/workflows/ --with-context -p github -f -l workflows: \ -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))'
+cue import ./.github/workflows/ --with-context -p github -f -l workflows: -l 'strings.TrimSuffix(path.Base(filename),path.Ext(filename))'
 ```
 
 Check that a CUE file has been created for each YAML workflow in the
@@ -128,7 +128,7 @@ Fetch a schema for GitHub Actions workflows, as defined by the 3rd party
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/5ffe36662a8fcab3c32e8fbca39c5253809e6913/src/schemas/json/github-workflow.json
+curl -o internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/0a3e561da60ccc2fae1411fb5af2a94e9dc4ff6e/src/schemas/json/github-workflow.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -140,7 +140,7 @@ Import the schema into CUE:
 
 :computer: `terminal`
 ```sh
-cue import -f -l '#Workflow:' internal/ci/github/github.actions.workflow.schema.json
+cue import -f -l '#Workflow:' -p github internal/ci/github/github.actions.workflow.schema.json
 ```
 
 #### :arrow_right: Apply the schema
@@ -223,7 +223,8 @@ on demand.
 #### :arrow_right: Test the CUE workflow command
 
 With the modified `ci_tool.cue` file in place, check that the `regenerate`
-workflow command is available **from a shell sitting at the repo root**. For example:
+workflow command is available **from a shell sitting at the root of the
+repository**. For example:
 
 :computer: `terminal`
 ```sh
@@ -242,7 +243,7 @@ Usage:
 
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
-| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then your workflow command isn't set up as CUE requires. Double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the root of the repository.
+| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running CUE `v0.9.x` or `v0.10.0` (which didn't support this specific `cue` invocation). Either [upgrade your `cue` command](https://cuelang.org/dl) to `v0.11.0-alpha.2` or later, or if the problem still strikes then double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory.
 
 #### :arrow_right: Regenerate the YAML workflow files
 
