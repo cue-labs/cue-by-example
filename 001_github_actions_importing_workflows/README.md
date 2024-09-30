@@ -9,6 +9,10 @@ This allows you to switch to CUE as a source of truth for GitHub Actions
 workflows and perform client-side validation, without GitHub needing to know
 you're managing your workflows with CUE.
 
+|   :exclamation: WARNING :exclamation:   |
+|:--------------------------------------- |
+| This guide requires that you use `cue` version `v0.11.0-alpha.2` or later. **The process described below won't work with earlier versions**. Check the version of your `cue` command by running `cue version`, and [upgrade it](https://cuelang.org/dl) if needed.
+
 ## Prerequisites
 
 - You have
@@ -77,7 +81,7 @@ location derived from its original file name:
 
 :computer: `terminal`
 ```sh
-head .github/workflows/*.cue
+head -5 .github/workflows/*.cue
 ```
 
 The output should reflect your workflows. In our example:
@@ -128,7 +132,7 @@ Fetch a schema for GitHub Actions workflows, as defined by the 3rd party
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/f728a2d857a938979f09b0a7f014fbe0bc1898ee/src/schemas/json/github-workflow.json
+curl -sSo internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/f728a2d857a938979f09b0a7f014fbe0bc1898ee/src/schemas/json/github-workflow.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -162,11 +166,6 @@ package github
 
 // Each member of the workflows struct must be a valid #Workflow.
 workflows: [_]: #Workflow
-
-// Augment the imported #Workflow definition to enable successful evaluation.
-#Workflow: jobs?: [string]: steps?: [...(
-    {uses?: _|_} | {run?: _|_}),
-]
 ```
 
 ### Generate YAML from CUE
@@ -248,7 +247,7 @@ Usage:
 
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
-| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running CUE `v0.9.x` or `v0.10.0` (which didn't support this specific `cue` invocation). Either [upgrade your `cue` command](https://cuelang.org/dl) to `v0.11.0-alpha.2` or later, or if the problem still strikes then double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory.
+| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running a CUE version older than `v0.11.0-alpha.2`. If you've [upgraded to at least that version](https://cuelang.org/dl) but the usage explanation still isn't being displayed then: (1) double check the contents of the `ci_tool.cue` file and the modifications you made to it; (2) make sure its location in the repository is precisely as given in this guide; (3) ensure the filename is *exactly* `ci_tool.cue`; (4) check that the `internal/ci/github/workflows.cue` file has the same contents as shown above; (5) run `cue vet ./internal/ci/github` and check that your workflows actually validate successfully - in other words: were they truly valid before you even started this process? Lastly, make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory. If you get really stuck, please come and join [the CUE community](https://cuelang.org/community/) and ask for some help!
 
 #### :arrow_right: Regenerate the YAML workflow files
 
