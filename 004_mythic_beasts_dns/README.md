@@ -141,7 +141,7 @@ zones?: {
 
 	// These policies apply only to our primary domain
 	"my-primary-domain.test": {
-		// "blog.my-primary-domain.test", must exist (as it makes all our revenue)
+		// "blog.my-primary-domain.test", must exist (as it drives all our revenue!)
 		blog!: _
 	}
 }
@@ -211,7 +211,6 @@ zones: [_]: #Zone
 
 #Zone: {
 	[#Host]: {
-		struct.MinFields(1)
 		A?:     #A
 		AAAA?:  #AAAA
 		ANAME?: #ANAME
@@ -230,7 +229,7 @@ zones: [_]: #Zone
 #AAAA: [#IPv6]:  #Record
 #ANAME: [#FQDN]: #Record
 #CNAME: [#FQDN]: #Record
-#MX: [#FQDN]:    #Record & {
+#MX: [#FQDN]: #Record & {
 	pri: int
 }
 #NS: [#FQDN]:   #Record
@@ -324,7 +323,7 @@ _mythic_beast_zone_records: {
 	for zone_name, zone_config in zones {
 		(zone_name): [
 			for host_name, host_config in zone_config
-			for rrtype in [ "A", "AAAA", "ANAME", "CNAME", "NS", "TXT"]
+			for rrtype in ["A", "AAAA", "ANAME", "CNAME", "NS", "TXT"]
 			for _data, _record in (*host_config[rrtype] | {}) {
 				{host: host_name, ttl: _record.ttl, type: rrtype, data: _data}
 			},
