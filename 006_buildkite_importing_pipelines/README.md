@@ -140,7 +140,6 @@ mv ./.buildkite/*.cue internal/ci/buildkite
 ### Validate workflows
 
 <!-- TODO: upstream JSONSchema isn't usable
-cf. https://github.com/cue-lang/cue/issues/2698
 cf. https://github.com/cue-lang/cue/issues/2699
 
 #### :arrow_right: Fetch a pipeline schema
@@ -150,7 +149,8 @@ place it in the `internal/ci/buildkite` directory:
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/buildkite/buildkite.pipeline.schema.json https://raw.githubusercontent.com/buildkite/pipeline-schema/6396f68d5e983e0d2acbf829c565027a4cfd69bc/schema.json
+curl -o internal/ci/buildkite/buildkite.pipeline.schema.json \
+  https://raw.githubusercontent.com/buildkite/pipeline-schema/6396f68d5e983e0d2acbf829c565027a4cfd69bc/schema.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -188,7 +188,7 @@ package buildkite
 
 |  :grey_exclamation: Info :grey_exclamation: |
 |:------------------------------------------- |
-| It would be great if we could use [Buildkite's authoritative pipeline schema](https://github.com/buildkite/pipeline-schema) here. Unfortunately, CUE's JSONSchema support can't currently import it. This is being tracked in CUE Issues [#2698](https://github.com/cue-lang/cue/issues/2698) and [#2699](https://github.com/cue-lang/cue/issues/2699), and this guide should be updated once the schema is useable.
+| It would be great if we could use [Buildkite's authoritative pipeline schema](https://github.com/buildkite/pipeline-schema) here. Unfortunately, CUE's JSONSchema support can't currently import it. This is being tracked in issue [#2699](https://github.com/cue-lang/cue/issues/2699), and this guide will be updated when the upstream schema can be used.
 
 #### :arrow_right: Apply the schema
 
