@@ -9,6 +9,10 @@ This is useful because it allows you to switch to CUE as a source of truth for
 GitLab pipelines and perform client-side validation, without GitLab needing to
 know you're managing your pipelines with CUE.
 
+|   :exclamation: WARNING :exclamation:   |
+|:--------------------------------------- |
+| This guide requires that you use `cue` version `v0.11.0-alpha.4` or later. **The process described below won't work with earlier versions**. Check the version of your `cue` command by running `cue version`, and [upgrade it](https://cuelang.org/dl) if needed.
+
 ## Prerequisites
 
 - You have [`cue` installed](https://cuelang.org/docs/install/).
@@ -44,11 +48,11 @@ git status       # should report "working tree clean"
 #### :arrow_right: Initialise a CUE module
 
 Initialise a CUE module named after the organisation and repository you're
-working with. For example:
+working with, but containing only lowercase letters and numbers. For example:
 
 :computer: `terminal`
 ```sh
-cue mod init gitlab.com/Flockademic/Flockademic
+cue mod init gitlab.com/flockademic/flockademic
 ```
 
 #### :arrow_right: Import YAML pipeline
@@ -74,7 +78,8 @@ ls {,.}*gitlab-ci*
 Your output should look similar to this, with a matching YAML and CUE file:
 
 ```text
-gitlab-ci.cue  .gitlab-ci.yml
+.gitlab-ci.yml
+gitlab-ci.cue
 ```
 
 Observe that your file has been imported into the `pipelines` struct at a
@@ -82,16 +87,16 @@ location derived from its original file name, by running:
 
 :computer: `terminal`
 ```sh
-head gitlab-ci.cue
+head -9 gitlab-ci.cue
 ```
 
 The output should reflect your pipeline. In our example:
 
 ```text
 package gitlab
+
 pipelines: ".gitlab-ci": {
 	image: "node:8.10"
-
 	stages: [
 		"prepare",
 		"test",
@@ -129,7 +134,7 @@ place it in the `internal/ci/gitlab` directory:
 
 :computer: `terminal`
 ```sh
-curl -o internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/7aa6170c4c81a98f372d7c52f3918858c4b69cca/app/assets/javascripts/editor/schema/ci.json
+curl -sSo internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/7aa6170c4c81a98f372d7c52f3918858c4b69cca/app/assets/javascripts/editor/schema/ci.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -139,7 +144,8 @@ Convert the GitLab schema from JSON Schema to CUE:
 
 :computer: `terminal`
 ```sh
-cue import internal/ci/gitlab/gitlab.cicd.pipeline.schema.json -p gitlab -l '#Pipeline:'
+cue import -p gitlab -l '#Pipeline:' \
+  internal/ci/gitlab/gitlab.cicd.pipeline.schema.json
 ```
 
 This command will create the file `internal/ci/gitlab/gitlab.cicd.pipeline.schema.cue`
@@ -240,7 +246,7 @@ Usage:
 
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
-| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then your tool file isn't set up as CUE requires. Double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the root of the repository.
+| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running a CUE version older than `v0.11.0-alpha.4`. If you've [upgraded to at least that version](https://cuelang.org/dl) but the usage explanation still isn't being displayed then: (1) double check the contents of the `ci_tool.cue` file and the modifications you made to it; (2) make sure its location in the repository is precisely as given in this guide; (3) ensure the filename is *exactly* `ci_tool.cue`; (4) run `cue vet ./internal/ci/gitlab` and check that your pipelines actually validate successfully - in other words: were they truly valid before you even started this process? Lastly, make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory. If you get really stuck, please come and join [the CUE community](https://cuelang.org/community/) and ask for some help!
 
 #### :arrow_right: Regenerate the YAML pipeline file
 
