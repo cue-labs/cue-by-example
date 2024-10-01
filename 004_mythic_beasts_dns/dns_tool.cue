@@ -60,7 +60,7 @@ _mythic_beast_zone_records: {
 	for zone_name, zone_config in zones {
 		(zone_name): [
 			for host_name, host_config in zone_config
-			for rrtype in [ "A", "AAAA", "ANAME", "CNAME", "NS", "TXT"]
+			for rrtype in ["A", "AAAA", "ANAME", "CNAME", "NS", "TXT"]
 			for _data, _record in (*host_config[rrtype] | {}) {
 				{host: host_name, ttl: _record.ttl, type: rrtype, data: _data}
 			},
