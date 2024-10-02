@@ -9,6 +9,10 @@ This allows you to switch to CUE as a source of truth for Buildkite pipelines
 and perform client-side validation, without Buildkite needing to know you're
 managing your static pipelines with CUE.
 
+|   :exclamation: WARNING :exclamation:   |
+|:--------------------------------------- |
+| This guide requires that you use `cue` version `v0.11.0-alpha.2` or later. **The process described below won't work with earlier versions**. Check the version of your `cue` command by running `cue version`, and [upgrade it](https://cuelang.org/dl) if needed.
+
 ## Prerequisites
 
 - You have
@@ -71,7 +75,10 @@ Your output should look similar to this, with matching pairs of pre-existing
 YAML and new CUE files:
 
 ```text
-pipeline.cue pipeline.deploy.cue pipeline.deploy.yml pipeline.yml
+pipeline.cue
+pipeline.deploy.cue
+pipeline.deploy.yml
+pipeline.yml
 ```
 
 Observe that each pipeline has been imported into the `pipelines` struct, at a
@@ -289,7 +296,7 @@ Usage:
 
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
-| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then your tool file isn't set up as CUE requires. Double check the contents of the `ci_tool.cue` file and the modifications you made to it, as well as its location in the repository. Ensure the filename is *exactly* `ci_tool.cue`. Make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the root of the repository.
+| If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running a CUE version older than `v0.11.0-alpha.2`. If you've [upgraded to at least that version](https://cuelang.org/dl) but the usage explanation still isn't being displayed then: (1) double check the contents of the `ci_tool.cue` file and the modifications you made to it; (2) make sure its location in the repository is precisely as given in this guide; (3) ensure the filename is *exactly* `ci_tool.cue`; (4) run `cue vet ./internal/ci/buildkite` and check that your pipelines actually validate successfully - in other words: were they truly valid before you even started this process? Lastly, make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory. If you get really stuck, please come and join [the CUE community](https://cuelang.org/community/) and ask for some help!
 
 #### :arrow_right: Regenerate the YAML pipeline files
 
