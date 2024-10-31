@@ -15,16 +15,19 @@ you're managing your workflows with CUE.
 
 ## Prerequisites
 
+- You have a set of GitHub Actions workflow files.
+  - The examples shown in this guide use the state of the first commit of CUE's
+    [github-actions-example](https://github.com/cue-examples/github-actions-example/tree/2b9d2f240d0c677c30218282dc10f95dfd566453/.github/workflows)
+    repository, but you don't need to use that repository in any way.
 - You have
   [CUE installed](https://alpha.cuelang.org/docs/introduction/installation/)
-  locally. This allows you to run `cue` commands.
-- You have a set of GitHub Actions workflow files. The examples shown in this
-  guide use the state of the first commit of CUE's
-  [github-actions-example repository](https://github.com/cue-examples/github-actions-example/tree/2b9d2f240d0c677c30218282dc10f95dfd566453/.github/workflows),
-  but you don't need to use that repository in any way.
+  locally -- this allows you to run `cue` commands
+  - You must have version `v0.11.0-alpha.2` or later installed.
+- You have a [GitHub](https://github.com) account -- this allows you to use the
+  CUE Central Registry.
+- You have a [Central Registry](https://registry.cue.works) account -- this
+  allows you to fetch a schema to validate your GitHub Actions workflows.
 - You have [`git` installed](https://git-scm.com/downloads).
-- You have [`curl` installed](https://curl.se/dlwiz/), or can fetch a file from
-  a website some other way.
 
 ## Steps
 
@@ -38,8 +41,8 @@ state, with no modified files. For example:
 
 :computer: `terminal`
 ```sh
-cd github-actions-example  # our example repository
-git status                 # should report "working tree clean"
+cd github-actions-example # our example repository
+git status # should report "working tree clean"
 ```
 
 #### :arrow_right: Initialise a CUE module
@@ -73,9 +76,11 @@ Your output should look similar to this, with matching pairs of YAML and CUE
 files:
 
 ```text
-workflow1.cue  workflow1.yml  workflow2.cue  workflow2.yml
+workflow1.cue
+workflow1.yml
+workflow2.cue
+workflow2.yml
 ```
-
 Observe that each workflow has been imported into the `workflows` struct, at a
 location derived from its original file name:
 
@@ -91,16 +96,16 @@ The output should reflect your workflows. In our example:
 package github
 
 workflows: workflow1: {
-        on: [
-                "push",
+	on: [
+		"push",
+
 ==> .github/workflows/workflow2.cue <==
 package github
 
 workflows: workflow2: {
-        on: [
-                "push",
+	on: [
+		"push",
 ```
-
 #### :arrow_right: Store CUE workflows in a dedicated directory
 
 Create a directory called `github` to hold your CUE-based GitHub Actions
@@ -124,28 +129,33 @@ mv ./.github/workflows/*.cue internal/ci/github
 
 ### Validate workflows
 
-#### :arrow_right: Fetch a workflow schema
+#### :arrow_right: Authenticate the `cue` command against the CUE Central Registry
 
-Fetch a schema for GitHub Actions workflows, as defined by the 3rd party
-[JSON Schema Store](https://www.schemastore.org/) project, and place it in the
-`internal/ci/github` directory:
+Run this command, and follow the instructions it displays:
 
 :computer: `terminal`
 ```sh
-curl -sSo internal/ci/github/github.actions.workflow.schema.json https://raw.githubusercontent.com/SchemaStore/schemastore/f728a2d857a938979f09b0a7f014fbe0bc1898ee/src/schemas/json/github-workflow.json
+cue login
 ```
 
-We use a specific commit from the upstream repository to make sure that this
-process is reproducible.
+This will allow you to fetch modules from the Central Registry.
 
-#### :arrow_right: Import the schema
-
-Import the schema into CUE:
+#### :arrow_right: Add a dependency on a GitHub Actions module
 
 :computer: `terminal`
 ```sh
-cue import -f -l '#Workflow:' -p github internal/ci/github/github.actions.workflow.schema.json
+cue mod get github.com/cue-tmp/jsonschema-pub/exp1/githubactions@v0.3.0
 ```
+
+This command specifies a precise version of the GitHub Actions module in order
+to make sure that this process is reproducible.
+
+The GitHub Actions module *looks* like it has a temporary location because it
+was created as part of the CUE project's work to figure out how and where to
+store third-party schemas. Whilst it will eventually live at a more permanent
+and appropriate location (which will then be reflected in this guide), this
+*version* of the module won't disappear from its "temporary" location - so it's
+safe to use!
 
 #### :arrow_right: Apply the schema
 
@@ -160,13 +170,31 @@ that *doesn't* already exist. Place the file in the `internal/ci/github/`
 directory.
 
 :floppy_disk: `internal/ci/github/workflows.cue`
-
-```
+```cue
 package github
 
+import "github.com/cue-tmp/jsonschema-pub/exp1/githubactions"
+
 // Each member of the workflows struct must be a valid #Workflow.
-workflows: [_]: #Workflow
+workflows: [_]: githubactions.#Workflow
 ```
+
+#### :arrow_right: Validate your workflows
+
+:computer: `terminal`
+```sh
+cue vet ./internal/ci/github
+```
+
+If this command fails and produces any output, then CUE believes that at least
+one of your workflows isn't valid. It's very likely that CUE is correct (and
+has found a problem) even if GitHub Actions manages to process your workflow
+files successfully -- because GitHub Actions can be lax and overly permissive
+in enforcing its own schema rules!  You'll need to resolve this before
+continuing, by updating your workflows inside your new CUE files. If you're
+having difficulty fixing them, please come and ask for help in the friendly CUE
+[Slack workspace](https://cuelang.org/s/slack) or
+[Discord server](https://cuelang.org/s/discord)!
 
 ### Generate YAML from CUE
 
@@ -176,7 +204,7 @@ Create a CUE file at `internal/ci/github/ci_tool.cue`, containing the following 
 Adapt the element commented with `TODO`:
 
 :floppy_disk: `internal/ci/github/ci_tool.cue`
-```CUE
+```cue
 package github
 
 import (
@@ -209,7 +237,7 @@ command: regenerate: {
 			for _workflowName, _workflow in workflows
 			let _filename = _workflowName + ".yml" {
 				"Generate \(_filename)": file.Create & {
-					$after: [ for v in clean {v}]
+					$after: [for v in clean {v}]
 					filename: path.Join([_workflowDir, _filename], _goos)
 					contents: "# \(_donotedit)\n\n\(yaml.Marshal(_workflow))"
 				}
@@ -232,7 +260,7 @@ repository**. For example:
 
 :computer: `terminal`
 ```sh
-cd $(git rev-parse --show-toplevel)            # make sure we're sitting at the repository root
+cd $(git rev-parse --show-toplevel) # make sure we're sitting at the repository root
 cue help cmd regenerate ./internal/ci/github   # the "./" prefix is required
 ```
 
@@ -240,11 +268,10 @@ Your output **must** begin with the following:
 
 ```text
 Regenerate all workflow files
+
 Usage:
   cue cmd regenerate [flags]
-[... output continues ...]
 ```
-
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
 | If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running a CUE version older than `v0.11.0-alpha.2`. If you've [upgraded to at least that version](https://cuelang.org/dl) but the usage explanation still isn't being displayed then: (1) double check the contents of the `ci_tool.cue` file and the modifications you made to it; (2) make sure its location in the repository is precisely as given in this guide; (3) ensure the filename is *exactly* `ci_tool.cue`; (4) check that the `internal/ci/github/workflows.cue` file has the same contents as shown above; (5) run `cue vet ./internal/ci/github` and check that your workflows actually validate successfully - in other words: were they truly valid before you even started this process? Lastly, make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory. If you get really stuck, please come and join [the CUE community](https://cuelang.org/community/) and ask for some help!
@@ -256,7 +283,7 @@ example:
 
 :computer: `terminal`
 ```sh
-cue cmd regenerate ./internal/ci/github   # the "./" prefix is required
+cue cmd regenerate ./internal/ci/github # the "./" prefix is required
 ```
 
 #### :arrow_right: Audit changes to the YAML workflow files
@@ -272,7 +299,6 @@ Your output should look similar to the following example:
 
 ```diff
 diff --git a/.github/workflows/workflow1.yml b/.github/workflows/workflow1.yml
-index 8ad852c..49fe56e 100644
 --- a/.github/workflows/workflow1.yml
 +++ b/.github/workflows/workflow1.yml
 @@ -1,3 +1,5 @@
@@ -282,7 +308,6 @@ index 8ad852c..49fe56e 100644
    - push
    - pull_request
 diff --git a/.github/workflows/workflow2.yml b/.github/workflows/workflow2.yml
-index 8455210..d0d434c 100644
 --- a/.github/workflows/workflow2.yml
 +++ b/.github/workflows/workflow2.yml
 @@ -1,3 +1,5 @@
@@ -331,7 +356,7 @@ to all the CUE and YAML files. For example:
 
 :computer: `terminal`
 ```sh
-cue cmd regenerate ./internal/ci/github/         # the "./" prefix is required
+cue cmd regenerate ./internal/ci/github/ # the "./" prefix is required
 git add .github/workflows/ internal/ci/github/
-git commit -m "ci: added new release workflow"   # example message
+git commit -m "ci: added new release workflow" # example message
 ```
