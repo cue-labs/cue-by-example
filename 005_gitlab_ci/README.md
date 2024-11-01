@@ -15,16 +15,18 @@ know you're managing your pipelines with CUE.
 
 ## Prerequisites
 
-- You have [`cue` installed](https://cuelang.org/docs/install/).
 - You have a GitLab pipeline file.
-  - The example shown throughout this guide uses the state of a specific commit
-    from the
-    [Flockademic repository](https://gitlab.com/Flockademic/Flockademic/-/blob/8efcea927b10c2773790fe78bb858905a75cf3ef/.gitlab-ci.yml)
-    on gitlab.com, as linked from
-    [GitLab's documentation pages](https://docs.gitlab.com/ee/ci/examples/end_to_end_testing_webdriverio/index.html),
-    but you don't need to use that repository in any way.\
-    It is used here as it represents a reasonably complex example of a GitLab
+  - The example shown throughout this guide uses the pipeline file from a
+    specific commit in the
+    [`gitlab-org/gitlab` repository](https://gitlab.com/gitlab-org/gitlab/-/blob/3308936efcd70839cc61e0545dcb780756e4ec28/.gitlab-ci.yml)
+    on gitlab.com, as linked from GitLab's
+    [CI documentation pages](https://docs.gitlab.com/ee/ci/yaml/),
+    but **you don't need to use that repository in any way**. It's used as the
+    example in this guide only because it's a reasonably complex GitLab
     pipeline file.
+- You have [`cue` installed](https://cuelang.org/docs/install/).
+  - You must have version `v0.11.0-alpha.4` or later installed. Using an
+    earlier version will cause certain commands in this guide to fail.
 - You have [`git` installed](https://git-scm.com/downloads).
 - You have [`curl` installed](https://curl.se/dlwiz/), or can fetch a remote
   file some other way.
@@ -41,8 +43,8 @@ no modified files. For example:
 
 :computer: `terminal`
 ```sh
-cd Flockademic   # our example repository
-git status       # should report "working tree clean"
+cd gitlab # our example repository
+git status # should report "working tree clean"
 ```
 
 #### :arrow_right: Initialise a CUE module
@@ -52,7 +54,7 @@ working with, but containing only lowercase letters and numbers. For example:
 
 :computer: `terminal`
 ```sh
-cue mod init gitlab.com/flockademic/flockademic
+cue mod init gitlab.com/gitlab-org/gitlab
 ```
 
 #### :arrow_right: Import YAML pipeline
@@ -81,7 +83,6 @@ Your output should look similar to this, with a matching YAML and CUE file:
 .gitlab-ci.yml
 gitlab-ci.cue
 ```
-
 Observe that your file has been imported into the `pipelines` struct at a
 location derived from its original file name, by running:
 
@@ -96,14 +97,13 @@ The output should reflect your pipeline. In our example:
 package gitlab
 
 pipelines: ".gitlab-ci": {
-	image: "node:8.10"
 	stages: [
+		"sync",
+		"preflight",
 		"prepare",
-		"test",
-		"build-backend",
-		"deploy-backend",
+		"build-images",
+		"fixtures",
 ```
-
 #### :arrow_right: Store CUE pipelines in a dedicated directory
 
 Create a directory called `gitlab` to hold your CUE-based GitLab pipeline
@@ -134,7 +134,7 @@ place it in the `internal/ci/gitlab` directory:
 
 :computer: `terminal`
 ```sh
-curl -sSo internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/7aa6170c4c81a98f372d7c52f3918858c4b69cca/app/assets/javascripts/editor/schema/ci.json
+curl -sSo internal/ci/gitlab/gitlab.cicd.pipeline.schema.json https://gitlab.com/gitlab-org/gitlab/-/raw/277c9f6b643c92d00101aca0f2b4b874a144f7c5/app/assets/javascripts/editor/schema/ci.json
 ```
 
 We use a specific commit from the upstream repository to make sure that this
@@ -165,12 +165,26 @@ Create the file in the `internal/ci/gitlab/` directory and add this CUE:
 
 :floppy_disk: `internal/ci/gitlab/pipelines.cue`
 
-```
+```cue
 package gitlab
 
 // each member of the pipelines struct must be a valid #Pipeline
-pipeline: [_]: #Pipeline
+pipelines: [_]: #Pipeline
 ```
+
+#### :arrow_right: Validate your pipelines
+
+:computer: `terminal`
+```sh
+cue vet ./internal/ci/gitlab
+```
+
+If this command fails and produces any output, then CUE believes that at least
+one of your pipelines isn't valid. You'll need to resolve this before
+continuing, by updating your pipelines inside your new CUE files. If you're
+having difficulty fixing them, please come and ask for help in the friendly CUE
+[Slack workspace](https://cuelang.org/s/slack) or
+[Discord server](https://cuelang.org/s/discord)!
 
 ### Generate YAML from CUE
 
@@ -180,7 +194,7 @@ Create a CUE file in `internal/ci/gitlab/` containing the following workflow com
 Adapt the element commented with `TODO`:
 
 :floppy_disk: `internal/ci/gitlab/ci_tool.cue`
-```CUE
+```cue
 package gitlab
 
 import (
@@ -230,7 +244,7 @@ example:
 
 :computer: `terminal`
 ```sh
-cd $(git rev-parse --show-toplevel)            # make sure we're sitting at the repository root
+cd $(git rev-parse --show-toplevel) # make sure we're sitting at the repository root
 cue help cmd regenerate ./internal/ci/gitlab   # the "./" prefix is required
 ```
 
@@ -241,9 +255,7 @@ Regenerate pipeline files
 
 Usage:
   cue cmd regenerate [flags]
-[... output continues ...]
 ```
-
 |   :exclamation: WARNING :exclamation:   |
 |:--------------------------------------- |
 | If you *don't* see the usage explanation for the `regenerate` workflow command (or if you receive an error message) then **either** your workflow command isn't set up as CUE requires, **or** you're running a CUE version older than `v0.11.0-alpha.4`. If you've [upgraded to at least that version](https://cuelang.org/dl) but the usage explanation still isn't being displayed then: (1) double check the contents of the `ci_tool.cue` file and the modifications you made to it; (2) make sure its location in the repository is precisely as given in this guide; (3) ensure the filename is *exactly* `ci_tool.cue`; (4) run `cue vet ./internal/ci/gitlab` and check that your pipelines actually validate successfully - in other words: were they truly valid before you even started this process? Lastly, make sure you've followed all the steps in this guide, and that you invoked the `cue help` command from the repository's root directory. If you get really stuck, please come and join [the CUE community](https://cuelang.org/community/) and ask for some help!
@@ -255,7 +267,7 @@ example:
 
 :computer: `terminal`
 ```sh
-cue cmd regenerate ./internal/ci/gitlab   # the "./" prefix is required
+cue cmd regenerate ./internal/ci/gitlab # the "./" prefix is required
 ```
 
 #### :arrow_right: Audit changes to the YAML pipeline file
@@ -272,20 +284,15 @@ Your output should look similar to the following example:
 
 ```diff
 diff --git a/.gitlab-ci.yml b/.gitlab-ci.yml
-index d0eaf801..d0a309e3 100644
 --- a/.gitlab-ci.yml
 +++ b/.gitlab-ci.yml
-@@ -1,5 +1,6 @@
--image: node:8.10
+@@ -1,3 +1,5 @@
 +# Code generated by internal/ci/gitlab/ci_tool.cue; DO NOT EDIT.
-
-+image: node:8.10
++
  stages:
-   - prepare
-   - test
-[ ... output continues ... ]
+   - sync
+   - preflight
 ```
-
 The main change in each YAML file is the addition of a header that warns the
 reader not to edit the file directly.
 
@@ -332,7 +339,7 @@ all the CUE and YAML files. For example:
 
 :computer: `terminal`
 ```sh
-cue cmd regenerate ./internal/ci/gitlab/         # the "./" prefix is required
+cue cmd regenerate ./internal/ci/gitlab/ # the "./" prefix is required
 git add .gitlab-ci.yml internal/ci/gitlab/
-git commit -m "ci: added new release pipeline"   # example message
+git commit -m "ci: added new release pipeline" # example message
 ```
