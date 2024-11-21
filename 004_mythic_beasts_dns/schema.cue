@@ -9,7 +9,6 @@ zones: [_]: #Zone
 
 #Zone: {
 	[#Host]: {
-		struct.MinFields(1)
 		A?:     #A
 		AAAA?:  #AAAA
 		ANAME?: #ANAME
@@ -28,7 +27,7 @@ zones: [_]: #Zone
 #AAAA: [#IPv6]:  #Record
 #ANAME: [#FQDN]: #Record
 #CNAME: [#FQDN]: #Record
-#MX: [#FQDN]:    #Record & {
+#MX: [#FQDN]: #Record & {
 	pri: int
 }
 #NS: [#FQDN]:   #Record
