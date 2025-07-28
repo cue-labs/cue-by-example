@@ -1,6 +1,9 @@
 # Driving GitLab CI/CD pipelines with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
+> [!TIP]
+> ## Check out cue.dev for more info about [getting started managing GitLab CI/CD pipelines with CUE](https://cue.dev/getting-started/gitlab-ci-cd-pipelines/)
+
 This guide explains how to convert a GitLab CI/CD pipeline file from YAML to
 CUE, check its contents are valid, and then use CUE's tooling layer to
 regenerate YAML.
