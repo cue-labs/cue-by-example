@@ -1,6 +1,9 @@
 # Driving Buildkite Pipelines with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
+> [!TIP]
+> ## Check out cue.dev for more info about [getting started managing Buildkite Pipelines with CUE](https://cue.dev/getting-started/buildkite-pipelines/)
+
 This guide explains how to convert static Buildkite pipeline files from YAML to
 CUE, check those pipelines are valid, and then use CUE's tooling layer to
 regenerate YAML.

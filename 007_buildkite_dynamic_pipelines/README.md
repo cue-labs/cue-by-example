@@ -1,6 +1,9 @@
 # Supercharging Buildkite dynamic pipelines with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com/)</sup>
 
+> [!TIP]
+> ## Check out cue.dev for more info about [getting started managing Buildkite Pipelines with CUE](https://cue.dev/getting-started/buildkite-pipelines/)
+
 This guide demonstrates how to use CUE to generate dynamic pipelines for the
 Bring-Your-Own-Compute CI service [Buildkite](https://buildkite.com).
 

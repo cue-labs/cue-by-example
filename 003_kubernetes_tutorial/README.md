@@ -1,6 +1,9 @@
 # Controlling Kubernetes with CUE
 <sup>by [The CUE Project](https://cuelang.org/)</sup>
 
+> [!TIP]
+> ## Check out cue.dev for more info about [getting started managing Kubernetes configurations with CUE](https://cue.dev/getting-started/kubernetes/)
+
 ## Introduction
 
 In this tutorial we show how to convert Kubernetes configuration files

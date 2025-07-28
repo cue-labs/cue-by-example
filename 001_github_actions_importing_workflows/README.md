@@ -1,6 +1,9 @@
 # Driving GitHub Actions workflows with CUE
 <sup>by [Jonathan Matthews](https://jonathanmatthews.com)</sup>
 
+> [!TIP]
+> ## Check out cue.dev for more info about [getting started managing GitHub Actions workflows with CUE](https://cue.dev/getting-started/github-actions-workflows/)
+
 This guide explains how to convert GitHub Actions workflow files from YAML to
 CUE, check those workflows are valid, and then use CUE's tooling layer to
 regenerate YAML.
